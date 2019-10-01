@@ -1,0 +1,16 @@
+[
+  {
+    "name": "io.jakes.artifactory.client.ArtifactoryClient",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "methods": [
+      { "name": "deleteDockerByDigest", "parameterTypes": [ "java.lang.String", "java.lang.String", "java.lang.String" ] },
+      { "name": "listDockerTags", "parameterTypes": [ "java.lang.String", "java.lang.String" ] },
+      { "name": "listFiles", "parameterTypes": [ "java.lang.String", "java.lang.String" ] },
+      { "name": "listDockerRepos", "parameterTypes": [ "java.lang.String" ] },
+      { "name": "listRepositories", "parameterTypes": [] }
+    ]
+  }
+]
