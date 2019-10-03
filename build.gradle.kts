@@ -1,3 +1,4 @@
+import kotlinx.coroutines.test.withTestContext
 import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -10,6 +11,10 @@ plugins {
 
 group = "io.jakes.artifactory"
 version = "0.1"
+
+tasks.withType<Test> {
+  useJUnitPlatform()
+}
 
 graal {
   mainClass("CliEntrypointKt")
@@ -45,6 +50,8 @@ dependencies {
 
   annotationProcessor("com.google.dagger:dagger-compiler:2.24")
 
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.2")
+  testImplementation("org.junit.jupiter:junit-jupiter-engine:5.5.2")
   graalVm("info.picocli:picocli-codegen:4.0.3")
 }
 
@@ -61,6 +68,8 @@ tasks.register<Jar>("cliJar") {
     attributes("Main-Class" to "CliEntrypointKt")
   }
 }
+
+tasks.named("assemble").get().dependsOn(tasks.named("cliJar").get())
 
 tasks.register<JavaExec>("reflectionConfig") {
   dependsOn(tasks.jar)

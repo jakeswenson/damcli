@@ -67,11 +67,21 @@ public interface ArtifactoryClient {
       @Path("repoKey") final String repoKey,
       @Path(value = "folderPath", encoded = true) final String folderPath);
 
+  @GET("api/storage/{repoKey}/{folderPath}?list&deep=1&listFolders=1")
+  Call<ArtifactFolder> listFilesWithFolders(
+      @Path("repoKey") final String repoKey,
+      @Path(value = "folderPath", encoded = true) final String folderPath);
 
   @DELETE("api/docker/{repoKey}/v2/{dockerRepo}/manifests/{digest}")
   Call<ResponseBody> deleteDockerByDigest(
       @Path("repoKey") final String repoKey,
       @Path("dockerRepo") final String dockerRepo,
       @Path("digest") final String digest);
+
+  @DELETE("{repoKey}/{dockerRepo}/{tag}")
+  Call<ResponseBody> deleteTagFolder(
+      @Path("repoKey") final String repoKey,
+      @Path("dockerRepo") final String dockerRepo,
+      @Path("tag") final String tag);
 
 }

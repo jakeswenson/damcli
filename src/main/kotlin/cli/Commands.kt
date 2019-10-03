@@ -2,6 +2,7 @@ package cli
 
 import com.google.common.base.CharMatcher
 import com.google.common.base.Splitter
+import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableSet
 import io.jakes.artifactory.client.ArtifactoryClient
 import java.time.LocalDateTime
@@ -44,10 +45,10 @@ fun cleanDockerImageTags(
   artifactoryClient: ArtifactoryClient
 ): Result {
 
-  val dockerImagesResponse = artifactoryClient.listDockerTags(cleanOptions.repoName, cleanOptions.imageName).execute()
+  val allTags = artifactoryClient.listDockerTags(cleanOptions.repoName, cleanOptions.imageName).execute()
 
-  if (!dockerImagesResponse.isSuccessful) {
-    return Result.Error(dockerImagesResponse.errorBody()?.string())
+  if (!allTags.isSuccessful) {
+    return Result.Error(allTags.errorBody()?.string())
   }
 
   val exclusionSet = setOf("latest") + cleanOptions.exclude
@@ -58,8 +59,10 @@ fun cleanDockerImageTags(
   data class TagInfo(val tag: String, val lastModified: OffsetDateTime) {}
 
   val files = artifactoryClient.listFiles(cleanOptions.repoName, cleanOptions.imageName).execute()
+  val manifestFileName = "manifest.json"
+
   val manifests = files.body()!!.files()
-    .filter { it.uri().endsWith("manifest.json") }
+    .filter { it.uri().endsWith(manifestFileName) }
     .map { TagInfo(splitter.split(matcher.trimLeadingFrom(it.uri())).first(), it.lastModified().toOffsetDateTime()) }
 
   var filtered = manifests.filter { it.tag !in exclusionSet }
@@ -79,6 +82,35 @@ fun cleanDockerImageTags(
   if (!cleanOptions.isTestRun) {
     tags.forEach { tag ->
       artifactoryClient.deleteDockerByDigest(cleanOptions.repoName, cleanOptions.imageName, tag).execute()
+    }
+  }
+
+  val listFilesRequest = artifactoryClient.listFilesWithFolders(cleanOptions.repoName, cleanOptions.imageName)
+
+  val filesAndFoldersResponse = listFilesRequest.execute()
+
+  val filesAndFolders = filesAndFoldersResponse.body()?.files() ?: ImmutableList.of()
+
+  val folders = filesAndFolders.filter { it.folder() }
+
+  val filesInFolders = folders.map { folder ->
+    folder.uri().substringAfter('/') to filesAndFolders.filter { it.folder().not() && it.uri().startsWith(folder.uri()) }
+      .map { it.uri().substringAfterLast('/') }
+      .toSet()
+  }.toMap()
+
+  filesInFolders.forEach { folder, folderFiles ->
+    if (!folderFiles.contains(manifestFileName)) {
+      println("$folder does not have a docker manifest... cleaning")
+
+      if (!cleanOptions.isTestRun) {
+        val request = artifactoryClient.deleteTagFolder(cleanOptions.repoName, cleanOptions.imageName, folder)
+        println(request.request().url())
+        val deleteFolderResponse = request.execute()
+        if (!deleteFolderResponse.isSuccessful) {
+          println(deleteFolderResponse.errorBody()?.string())
+        }
+      }
     }
   }
 

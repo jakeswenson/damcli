@@ -34,6 +34,8 @@ public abstract class ArtifactFile {
 
   public abstract Optional<String> mimeType();
 
+  public abstract boolean folder();
+
   @AutoValue.Builder
   public interface Builder {
     @JsonProperty("uri")
@@ -71,6 +73,9 @@ public abstract class ArtifactFile {
 
     @JsonProperty("mimeType")
     Builder mimeType(final String value);
+
+    @JsonProperty("folder")
+    Builder folder(final boolean value);
 
     ArtifactFile build();
   }
