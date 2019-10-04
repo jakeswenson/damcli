@@ -99,16 +99,15 @@ fun cleanDockerImageTags(
       .toSet()
   }.toMap()
 
-  filesInFolders.forEach { folder, folderFiles ->
+  filesInFolders.forEach { (folder, folderFiles) ->
     if (!folderFiles.contains(manifestFileName)) {
-      println("$folder does not have a docker manifest... cleaning")
+      println("$folder does not have a docker manifest...")
 
       if (!cleanOptions.isTestRun) {
         val request = artifactoryClient.deleteTagFolder(cleanOptions.repoName, cleanOptions.imageName, folder)
-        println(request.request().url())
         val deleteFolderResponse = request.execute()
         if (!deleteFolderResponse.isSuccessful) {
-          println(deleteFolderResponse.errorBody()?.string())
+          println("Error(${deleteFolderResponse.code()}: ${deleteFolderResponse.errorBody()?.string()}")
         }
       }
     }
