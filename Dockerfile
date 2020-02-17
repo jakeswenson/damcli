@@ -1,4 +1,4 @@
-FROM gradle:5.6-jdk8 as builder
+FROM gradle:6.1.1-jdk8 as builder
 
 RUN apt-get update && apt-get install -y build-essential zlib1g-dev
 
