@@ -5,14 +5,12 @@ RUN apt-get update && apt-get install -y build-essential zlib1g-dev
 COPY . /app
 WORKDIR /app
 
-RUN gradle --no-daemon --build-cache --info --full-stacktrace --configure-on-demand downloadGraalTooling
+RUN gradle --no-daemon --build-cache --info --full-stacktrace cliJar
 
-RUN gradle --no-daemon --build-cache --info --full-stacktrace nativeImage
+FROM gcr.io/distroless/java:11
 
-FROM gcr.io/distroless/java:8
+COPY --from=builder /app/build/libs/damcli-*-cli.jar /app/damcli.jar
 
-COPY --from=builder /app/build/graal/damcli /app/
-
-ENTRYPOINT ["/app/damcli"]
+ENTRYPOINT [ "/usr/bin/java", "-jar", "/app/damcli.jar"]
 
 
