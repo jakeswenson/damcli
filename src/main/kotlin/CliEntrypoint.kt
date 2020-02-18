@@ -1,15 +1,16 @@
 import cli.*
+import com.google.common.base.Strings
 import io.jakes.artifactory.client.ArtifactoryClient
 import io.jakes.artifactory.client.Mappers
 import picocli.CommandLine
 import kotlin.system.exitProcess
 
-
 @CommandLine.Command(
   name = "damcli",
   mixinStandardHelpOptions = true,
   usageHelpWidth = 125,
-  synopsisSubcommandLabel = "COMMAND")
+  synopsisSubcommandLabel = "COMMAND"
+)
 object AllCommands : Runnable {
   override fun run() {
     CommandLine.usage(this, System.out)
@@ -74,8 +75,10 @@ object AllCommands : Runnable {
   fun cleanDockerTags(
     @CommandLine.Option(names = ["-r", "--repository"], required = true)
     repoName: String,
-    @CommandLine.Option(names = ["-i", "--docker-image"], required = true)
-    dockerImage: String,
+    @CommandLine.Option(names = ["-i", "--docker-image"])
+    dockerImage: String?,
+    @CommandLine.Option(names = ["--all-images"])
+    allImages: Boolean = false,
     @CommandLine.Option(
       names = ["-k", "--keep"], defaultValue = "1",
       description = ["Minimum number of tags to keep"]
@@ -96,8 +99,14 @@ object AllCommands : Runnable {
     isTestRun: Boolean = false
   ): Int {
     val client = ClientFactory.createClient(ArtifactorySettings(server, apiKey))
+    if (Strings.isNullOrEmpty(dockerImage) && !allImages) {
+      return handleResult(Result.Error("Must pass either image name `-i`/`--docker-image` or `--all-images`"))
+    }
     val opts = CleanOptions(
-      repoName, imageName = dockerImage, keep = keep, olderThanDays = olderThanDays,
+      repoName,
+      image = CleanImageArgs(allImages, dockerImage),
+      keep = keep,
+      olderThanDays = olderThanDays,
       isTestRun = isTestRun
     )
     return handleResult(cleanDockerImageTags(opts, client))
